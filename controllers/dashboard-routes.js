@@ -14,6 +14,8 @@ router.get('/', withAuth, async (req, res) => {
 
         // Pass serialized data and session flag into template
         res.render('post-page', {
+            layout: 'dashboard',
+
             posts,
             logged_in: req.session.logged_in
         });
@@ -23,7 +25,9 @@ router.get('/', withAuth, async (req, res) => {
 })
 
 router.get('/create', withAuth, (req, res) => {
-    res.render('create-post')
+    res.render('create-post', {
+        layout: 'dashboard',
+    });
 });
 
 
@@ -33,6 +37,7 @@ router.get('/edit/:id', withAuth, async (req, res) => {
         const post = editPost.get({ plain: true });
 
         res.render('edit-post', {
+            layout: 'dashboard',
             post
         });
     } catch (err) {

@@ -1,6 +1,7 @@
 const sequelize = require('../config/connection');
 
 
+
 const dataUser = require('./Users');
 const dataPost = require('./Post');
 const dataComment = require('./Comments');
