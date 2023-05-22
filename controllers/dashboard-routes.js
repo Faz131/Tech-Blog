@@ -39,7 +39,7 @@ router.get('/', withAuth, async (req, res) => {
 
 });
 
-router.get('/edt/:id', withAuth, (req, res) => {
+router.get('/edit/:id', withAuth, (req, res) => {
     Posts.findOne({
         where: {
             id: req.params.id
