@@ -10,7 +10,25 @@ router.get('/', (req, res) => {
             res.status(500).json(err);
         });
 }
-)
+);
+
+router.get('/:id', (req, res) => {
+    User.findOne({
+        attributes: { exclude: ['[password]'] },
+        where: {
+            id: req.params.id
+        },
+        include: [{
+            model: Post,
+            attributes: [
+                'id',
+                'title',
+                'content',
+                'created_at'
+            ]
+        }]
+    })
+})
 
 router.post('/', async (req, res) => {
     try {

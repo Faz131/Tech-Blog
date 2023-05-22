@@ -1,48 +1,87 @@
 const router = require('express').Router();
-const { Posts, User } = require('../models');
+const sequelize = require('../config/connection');
+const { Posts, User, Comment } = require('../models');
 const withAuth = require('../utils/auth');
 
 router.get('/', withAuth, async (req, res) => {
-    try {
-        // Get all Posts and JOIN with user data
-        const postData = await Posts.findAll({
-            include: [User],
+    Posts.findAll({
+        where: {
+            user_id: req.session.user_id
+        },
+        attributes: [
+            'id',
+            'title',
+            'content',
+            'created_at'
+        ],
+
+        include: [{
+            model: Comment,
+            attributes: ['id', 'comment_text', 'post_id', 'created_at'],
+            includes: {
+                model: User,
+                attributes: ['username']
+            }
+        },
+
+        ]
+    })
+        .then(dbData => {
+            const posts = dbData.map(post => post.get({
+                plain: true
+            }));
+            res.render('dashboard', { posts, logged_in: true });
+        })
+
+        .catch(err => {
+            res.status(500).json(err);
         });
 
-        // Serialize data so the template can read it
-        const posts = postData.map((post) => post.get({ plain: true }));
+});
 
-        // Pass serialized data and session flag into template
-        res.render('post-page', {
-            layout: 'dashboard',
+router.get('/edt/:id', withAuth, (req, res) => {
+    Posts.findOne({
+        where: {
+            id: req.params.id
+        },
+        attributes: ['id',
+            'title',
+            'content',
+            'created_at'
+        ],
+        include: [{
+            model: User,
+            attributes: ['username']
+        },
+        {
+            model: Comment,
+            attributes: ['id', 'comment_text', 'post_id', 'user_id', 'created_at'],
+            include: {
+                model: User,
+                attributes: ['username']
 
-            posts,
-            logged_in: req.session.logged_in
-        });
-    } catch (err) {
-        res.status(500).json(err);
-    }
+            }
+        }
+        ]
+    })
+        .then(dbData => {
+            if (!dbData) {
+                res.status(404).json({ message: 'No id found for this post' });
+                return;
+            }
+            const post = dbData.get({
+                plain: true
+            });
+            res.render('edit-post', { post, logged_in: true });
+        })
+        .catch(err => {
+            res.status(500).json(err)
+        })
+    router.get('/new', (req, res) => {
+        res.render('new-post');
+    });
 })
 
-router.get('/create', withAuth, (req, res) => {
-    res.render('create-post', {
-        layout: 'dashboard',
-    });
-});
 
-
-router.get('/edit/:id', withAuth, async (req, res) => {
-    try {
-        const editPost = await Posts.findByPk(req.params.id);
-        const post = editPost.get({ plain: true });
-
-        res.render('edit-post', {
-            layout: 'dashboard',
-            post
-        });
-    } catch (err) {
-        res.status(500).json(err);
-    }
-});
 
 module.exports = router;
